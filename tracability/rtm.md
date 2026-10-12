@@ -1,37 +1,28 @@
 # SACDCS Requirements Traceability Matrix (RTM)
 
-## Purpose
-The RTM connects system requirements with robot states, operations, constraints, test cases, and risks. It helps ensure that requirements are implemented and tested.
-
 | Requirement ID | State / Transition | Operation | Constraint | Test Case | Risk |
 |---|---|---|---|---|---|
-| FR-01 | IDLE | OP-01 RegisterRobot | C-12 | TC-01 | Unregistered robot |
-| FR-02 | NAVIGATING | OP-03 ReadTemperature | C-07, C-08 | TC-02 | Item temperature becomes unsafe |
-| FR-03 | NAVIGATING | OP-04 ReadBattery | C-01 | TC-03 | Robot battery failure |
-| FR-04 | IDLE → NAVIGATING | OP-05 NavigateToDestination | C-04 | TC-04 | Robot goes to the wrong destination |
-| FR-05 | NAVIGATING → AVOIDING_OBSTACLE | OP-06 DetectObstacle | C-05 | TC-05 | Collision |
-| FR-06 | NAVIGATING → DELIVERING | OP-08 VerifyDelivery | C-04 | TC-06 | Incorrect or unsafe delivery |
-| FR-07 | DELIVERING → RETURNING | OP-09 CompleteDelivery | C-12 | TC-07 | Missing delivery record |
-| FR-08 | Any active state → SAFE_MODE | OP-11 EnterSafeMode | C-01 | TC-08 | Critical condition not handled |
-| FR-09 | Any active state → SAFE_MODE | OP-11 EnterSafeMode | C-06, C-11 | TC-09 | Unsafe robot movement |
-| FR-10 | Command processing | OP-14 AuthenticateCommand; OP-15 AuthorizeCommand | C-03 | TC-10 | Unauthorized control |
+| FR-01 | Command validation | OP-14 AuthenticateCommand; OP-15 AuthorizeCommand | C-03 | TC-10 | Critical |
+| FR-02 | IDLE → NAVIGATING | OP-02 AssignDelivery | C-10 | TC-04 | High |
+| FR-03 | NAVIGATING → crossing clearance | OP-05 NavigateToDestination | C-01, C-02 | TC-13 | Critical |
+| FR-04 | NAVIGATING → AVOIDING_OBSTACLE → NAVIGATING | OP-06 DetectObstacle; OP-07 AvoidObstacle | C-05 | TC-05 | Critical |
+| FR-05 | Chamber monitoring | OP-03 ReadTemperature; OP-04 ReadBattery | C-07, C-08 | TC-02, TC-03 | High |
+| FR-06 | Chamber correction and recovery | OP-03 ReadTemperature | C-07, C-08 | TC-12 | Critical |
+| FR-07 | Chamber protection response | OP-11 EnterSafeMode | C-06, C-08 | TC-12 | High |
+| FR-08 | Any active state → SAFE_MODE | OP-11 EnterSafeMode | C-01, C-06 | TC-08, TC-09 | Critical |
+| FR-09 | Active state → LINK_LOST | OP-12 DetectLinkLoss | C-09 | TC-13 | Critical |
+| FR-10 | DELIVERING → RETURNING → IDLE | OP-09 CompleteDelivery; OP-10 ReturnToBase | C-12 | TC-07 | High |
+| SAF-02 | Robot waits outside crossing until clearance | OP-05 NavigateToDestination | C-02, C-03 | TC-14 | Critical |
+| SAF-03 | Active state → LINK_LOST | OP-12 DetectLinkLoss | C-09 | TC-13 | Critical |
+| SAF-04 | Conservation suspended until verification | OP-03 ReadTemperature; OP-16 RecordEvent | C-08, C-12 | TC-12 | Critical |
+| CR-02 / NFR-02 | Concurrent robot operations | OP-02 AssignDelivery | C-02 | TC-11 | High |
+| CR-03 / NFR-03 | Command authentication and authorization | OP-14 AuthenticateCommand; OP-15 AuthorizeCommand | C-03 | TC-10 | Critical |
 
-## Change Request Traceability
+## Change Request Regression Testing
 
-| Change Request | Related Requirement | Test Case | Required Verification |
-|---|---|---|---|
-| CR-01 | FR-09 | TC-08, TC-09 | Safe Mode activates within 3 seconds of a critical condition. |
-| CR-02 | NFR-02 | TC-11 | At least 20 robots operate concurrently. |
-| CR-03 | FR-10, NFR-03 | TC-10 | Unauthenticated and unauthorized commands are rejected. |
-
-## Regression Testing
-
-After a change is implemented, repeat the affected tests:
-
-- **CR-01:** Repeat TC-02, TC-03, TC-08, and TC-09 because temperature, battery, and Safe Mode behaviour are related.
-- **CR-02:** Repeat TC-11 and check navigation, delivery status, and event logging under concurrent operation.
-- **CR-03:** Repeat TC-10 and relevant delivery-control tests to confirm unauthorized commands cannot trigger operations.
+- CR-01: Rerun TC-02, TC-03, TC-08, and TC-09.
+- CR-02: Rerun TC-11 and relevant telemetry, navigation, delivery, and logging tests.
+- CR-03: Rerun TC-10 and relevant command-execution tests.
 
 ## Traceability Review
-
-Every requirement should have a corresponding verification test. Any requirement without a test must be reviewed before the system is accepted.
+Each requirement must connect to a model element, operation, constraint, test, and risk level. Any missing link must be reviewed before acceptance. Test results must be supported by evidence.
