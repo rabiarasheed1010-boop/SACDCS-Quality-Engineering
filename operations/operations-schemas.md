@@ -1,105 +1,59 @@
-# SACDCS Operations and Operation Schemas
+# SACDCS Operations
 
-## 1. List of System Operations
+## 1. List of Operations
 
-| Operation ID | Operation | Description |
+| Operation ID | Operation Name | Purpose |
 |---|---|---|
-| OP-01 | RegisterRobot | Registers a delivery robot. |
-| OP-02 | AssignDelivery | Assigns a delivery task to a robot. |
-| OP-03 | ReadTemperature | Reads the chamber temperature. |
-| OP-04 | ReadBattery | Reads the robot's battery level. |
-| OP-05 | NavigateToDestination | Moves the robot toward its destination. |
-| OP-06 | DetectObstacle | Detects obstacles in the robot's path. |
-| OP-07 | AvoidObstacle | Moves safely around an obstacle. |
-| OP-08 | VerifyDelivery | Checks whether delivery conditions are satisfied. |
-| OP-09 | CompleteDelivery | Records a completed delivery. |
-| OP-10 | ReturnToBase | Sends the robot back to its base. |
-| OP-11 | EnterSafeMode | Activates Safe Mode during a critical condition. |
-| OP-12 | DetectLinkLoss | Detects loss of communication. |
-| OP-13 | RestoreConnection | Restores and verifies communication. |
-| OP-14 | AuthenticateCommand | Checks the identity of the command sender. |
-| OP-15 | AuthorizeCommand | Checks whether the sender's role permits the command. |
-| OP-16 | RecordEvent | Records an important system event. |
+| OP-01 | RegisterRobot | Register a robot in the system |
+| OP-02 | AssignDelivery | Assign a delivery to an available robot |
+| OP-03 | ReadTemperature | Read and verify chamber temperature |
+| OP-04 | ReadHumidity | Read and verify chamber humidity |
+| OP-05 | ReadVibration | Monitor vibration during transport |
+| OP-06 | CheckDoorStatus | Check whether the chamber door is secure |
+| OP-07 | CheckBattery | Measure remaining battery capacity |
+| OP-08 | CorrectChamberConditions | Correct temperature or humidity when outside limits |
+| OP-09 | VerifyConservation | Confirm chamber conditions using sensor readings |
+| OP-10 | NavigateToDestination | Move toward the assigned destination |
+| OP-11 | DetectAndAvoidObstacle | Detect an obstacle and avoid it safely |
+| OP-12 | VerifyDelivery | Confirm that delivery conditions are satisfied |
+| OP-13 | ReturnToBase | Return the robot to the warehouse |
+| OP-14 | EnterSafeMode | Stop normal operations during a critical fault |
+| OP-15 | DetectLinkLoss | Detect loss of required communication |
+| OP-16 | RestoreConnection | Restore and verify communication |
+| OP-17 | AuthenticateCommand | Verify the command sender's identity |
+| OP-18 | AuthorizeCommand | Check the sender's role permissions |
+| OP-19 | RecordEvent | Record events and safety decisions |
+| OP-20 | CheckRailwayClearance | Confirm railway crossing safety before entry |
 
 ## 2. Operation Schemas
 
 ### OP-02: AssignDelivery
 
-**Description:** Assigns a delivery task to an available robot.
-
-- **Inputs:** Robot ID, delivery ID, destination
-- **Outputs:** Assignment result
-- **Reads:** Robot status, destination details
-- **Changes:** Robot's assigned task
-- **Sends/Alerts:** Task assignment notification
-- **Preconditions:** Robot is registered and available.
-- **Postconditions:** The task is assigned, or a rejection is recorded.
+- **Description:** Assign a delivery request to an available registered robot.
+- **Inputs:** Delivery ID, destination, robot ID, operator credentials.
+- **Outputs:** Assignment result and task ID.
+- **Reads:** Robot availability, pending tasks, operator role.
+- **Changes:** Robot task status and assigned destination.
+- **Sends/Alerts:** Assignment confirmation or rejection.
+- **Assumes/Precondition:** Robot is registered and the command is authorized.
+- **Result/Postcondition:** One valid task is assigned, and the assignment is logged.
 
 ### OP-03: ReadTemperature
 
-**Description:** Reads the temperature of the conservation chamber.
+- **Description:** Read chamber temperature and compare it with the approved range for the batch.
+- **Inputs:** Robot ID, chamber ID, batch profile.
+- **Outputs:** Temperature reading, timestamp, status.
+- **Reads:** Temperature sensor and approved batch limits.
+- **Changes:** Latest chamber telemetry record.
+- **Sends/Alerts:** Temperature warning if outside the permitted range.
+- **Assumes/Precondition:** The sensor is available and its reading passes validity checks.
+- **Result/Postcondition:** A timestamped reading is recorded. The temperature is considered acceptable only if the valid measured value is within the approved range.
 
-- **Inputs:** Chamber ID, sensor reading
-- **Outputs:** Temperature value, reading status
-- **Reads:** Temperature sensor
-- **Changes:** Latest temperature record
-- **Sends/Alerts:** Temperature alert if the reading is outside the permitted range
-- **Preconditions:** Chamber and sensor are registered.
-- **Postconditions:** A valid reading is recorded, or a sensor fault is reported.
+### OP-04: ReadHumidity
 
-### OP-04: ReadBattery
-
-**Description:** Checks the robot's battery level.
-
-- **Inputs:** Robot ID, battery sensor reading
-- **Outputs:** Battery percentage, battery status
-- **Reads:** Battery sensor
-- **Changes:** Latest battery record
-- **Sends/Alerts:** Low-battery or critical-battery alert
-- **Preconditions:** Robot is registered and the battery sensor is available.
-- **Postconditions:** Battery status is recorded, or a sensor fault is reported.
-
-### OP-08: VerifyDelivery
-
-**Description:** Checks whether a delivery can safely proceed.
-
-- **Inputs:** Delivery ID, destination, temperature reading, robot status
-- **Outputs:** Approved or rejected result
-- **Reads:** Delivery details, temperature, robot status
-- **Changes:** Delivery verification status
-- **Sends/Alerts:** Rejection alert if a safety condition fails
-- **Preconditions:** A delivery task exists.
-- **Postconditions:** Delivery is approved only when all required conditions are satisfied.
-
-### OP-11: EnterSafeMode
-
-**Description:** Places the robot in Safe Mode when a critical condition occurs.
-
-- **Inputs:** Robot ID, critical temperature or battery event
-- **Outputs:** Safe Mode status
-- **Reads:** Current robot state, sensor readings
-- **Changes:** Robot state becomes SAFE_MODE
-- **Sends/Alerts:** Critical safety alert
-- **Preconditions:** A critical condition has been detected.
-- **Postconditions:** Safe Mode is activated within 3 seconds, and the event is logged.
-
-### OP-14: AuthenticateCommand
-
-**Description:** Verifies the identity of a person or system sending a command.
-
-- **Inputs:** Command, credentials, sender identity
-- **Outputs:** Authenticated or rejected result
-- **Reads:** User or system account records
-- **Changes:** Authentication audit log
-- **Sends/Alerts:** Rejection alert for invalid credentials
-- **Preconditions:** A command has been received.
-- **Postconditions:** The sender's identity is verified or the command is rejected.
-
-## 3. Sensor Verification
-
-The following operations require sensor verification:
-
-1. **OP-03 ReadTemperature:** Check sensor validity and reject missing or faulty readings.
-2. **OP-04 ReadBattery:** Check that the battery reading is valid and within the expected range.
-
-Invalid sensor readings must not be treated as safe readings. The system should report the fault and follow its safety procedure.
+- **Description:** Measure chamber humidity and compare it with the batch's approved range.
+- **Inputs:** Robot ID, chamber ID, batch profile.
+- **Outputs:** Humidity reading, timestamp, status.
+- **Reads:** Humidity sensor and approved humidity limits.
+- **Changes:** Latest humidity telemetry record.
+- **Sends/Alerts:** Warning
